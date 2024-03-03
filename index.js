@@ -9,7 +9,8 @@ const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildVoiceStates,
     ]
 });
 
@@ -22,6 +23,8 @@ let connectToVoice;
 let songFuntion;
 let player;
 let track;
+let dispatcher;
+let songTitle;
 
 client.on('interactionCreate', async interaction => {
     let { commandName } = interaction
@@ -40,17 +43,27 @@ client.on('interactionCreate', async interaction => {
         } else {
             songFuntion = await search(songToSearch);
 
-            connectToVoice = joinVoiceChannel({
+            connectToVoice = await joinVoiceChannel({
                 channelId: userVoiceChannel.id,
                 guildId: userVoiceChannel.guild.id,
                 adapterCreator: userVoiceChannel.guild.voiceAdapterCreator,
             });
 
-            player = createAudioPlayer();
-            connectToVoice.subscribe(player);
+            player = await createAudioPlayer();
+            await connectToVoice.subscribe(player);
 
-            track = createAudioResource(songFuntion.data[0].link);
-            player.play(track);
+            track = await createAudioResource(songFuntion.data[0].link);
+            await player.play(track);
+            
+
+            player.on('start', () => {
+                songTitle = songFuntion.data[0].title;
+                interaction.reply(`'playing', ${songTitle}`)
+            });
+
+            player.on('finish', () => {
+                interaction.reply('Finished!');
+            })
         }
 
     }
