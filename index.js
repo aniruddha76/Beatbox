@@ -55,15 +55,6 @@ client.on('interactionCreate', async interaction => {
             track = await createAudioResource(songFuntion.data[0].link);
             await player.play(track);
             
-
-            player.on('start', () => {
-                songTitle = songFuntion.data[0].title;
-                interaction.reply(`'playing', ${songTitle}`)
-            });
-
-            player.on('finish', () => {
-                interaction.reply('Finished!');
-            })
         }
 
     }
