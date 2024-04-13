@@ -1,5 +1,5 @@
 import { Client, GatewayIntentBits, Options } from 'discord.js';
-import { createAudioPlayer, createAudioResource, joinVoiceChannel } from '@discordjs/voice';
+import { createAudioPlayer, createAudioResource, joinVoiceChannel, AudioPlayerStatus } from '@discordjs/voice';
 import ytdl from 'ytdl-core';
 import dotenv from "dotenv";
 dotenv.config();
@@ -23,6 +23,7 @@ let connectToVoice;
 let player;
 let track;
 let stream;
+let firstSong;
 
 client.on('interactionCreate', async interaction => {
     let { commandName } = interaction
@@ -47,18 +48,36 @@ client.on('interactionCreate', async interaction => {
                 adapterCreator: userVoiceChannel.guild.voiceAdapterCreator,
             });
 
-            stream = ytdl(songQueue[0], {filter: 'audioonly'})
-            
-
             player = createAudioPlayer();
             connectToVoice.subscribe(player);
-
-            track = createAudioResource(stream);
-            player.play(track);
-
-            interaction.reply('playing ' + song);
-            songQueue.pop(song);
+            console.log(player.state.status)
         }
+
+            // stream = ytdl(songQueue[0], { filter: 'audioonly' })
+            // track = createAudioResource(stream);
+            // player.play(track);
+
+            // interaction.reply('playing ' + song);
+            // console.log(player.state.status);
+
+            if (player.state.status === 'idle') {
+                if (songQueue.length > 0) {
+                    firstSong = songQueue[0];
+                    stream = ytdl(firstSong, { filter: 'audioonly' });
+                    track = createAudioResource(stream);
+                    player.play(track)
+
+                    interaction.reply('playing ' + firstSong);
+                    console.log(player.state.status);
+
+                    player.on(AudioPlayerStatus.Idle, () => {
+                        let nextStream = ytdl(songQueue[+1], { filter: 'audioonly' });
+                        let nextTrack = createAudioResource(nextStream);
+                        player.play(nextTrack);
+                        interaction.channel.send('playing ' + songQueue[+1])
+                    })
+                }
+            }
 
     }
 });
