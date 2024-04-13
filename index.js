@@ -59,17 +59,16 @@ client.on('interactionCreate', async interaction => {
                 player.play(track)
 
                 interaction.reply('playing ' + firstSong);
-
-                for (let i = 0; i <= songQueue.length; i++) {
-
-                    player.on(AudioPlayerStatus.Idle, async () => {
-                        let nextStream = await ytdl(songQueue[i], { filter: 'audioonly' });
-                        let nextTrack = await createAudioResource(nextStream);
-                        await player.play(nextTrack);
-                        await interaction.channel.send('playing ' + songQueue[i])
-                    })
-                }
             }
+        }
+        for (let i = 1; i <= songQueue.length-1; i++) {
+
+            player.on(AudioPlayerStatus.Idle, async () => {
+                let nextStream = await ytdl(songQueue[i], { filter: 'audioonly' });
+                let nextTrack = await createAudioResource(nextStream);
+                await player.play(nextTrack);
+                await interaction.channel.send('playing ' + songQueue[i])
+            })
         }
     }
 });
