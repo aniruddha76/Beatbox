@@ -77,8 +77,9 @@ client.on('interactionCreate', async interaction => {
 
     } else if (commandName == 'leave') {
 
-        botVoiceChannel.disconnect()
-        interaction.reply('The bot has left the voice channel. Until next time!')
+        botVoiceChannel.disconnect();
+        interaction.reply('The bot has left the voice channel. Until next time!');
+        songQueue = [];
 
     }
 });
