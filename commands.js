@@ -13,15 +13,31 @@ const commands = [
   },
   {
     name: 'play',
-    description: 'search a song to play',
+    description: 'send youtube link to play',
     options: [
         {
           name: 'song',
-          description: 'song to search',
+          description: 'song to play',
           type: 3,
           required: true,
         }
       ]
+  },
+  {
+    name: 'pause',
+    description: 'pause current playing song'
+  },
+  {
+    name: 'resume',
+    description: 'resume last playing song'
+  },
+  {
+    name: 'skip',
+    description: 'skip a song'
+  },
+  {
+    name: 'leave',
+    description: 'Stop and leave the voice channel'
   },
 ];
 
