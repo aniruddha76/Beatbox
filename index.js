@@ -18,6 +18,7 @@ setupCommands(client);
 
 let song;
 let songQueue = [];
+let titleQueue = [];
 let userVoiceChannel;
 let player;
 let botVoiceChannel;
@@ -57,10 +58,15 @@ client.on('interactionCreate', async interaction => {
             connectToVoice.subscribe(player);
             playSong(song, interaction);
 
-
+            songInfo = ytdl.getBasicInfo(song);
+            songTitle = (await songInfo).videoDetails.title;
+            titleQueue.push(songTitle);
 
         } else {
             interaction.reply('Added to queue.');
+            songInfo = ytdl.getBasicInfo(song);
+            songTitle = (await songInfo).videoDetails.title;
+            titleQueue.push(songTitle);
         }
 
     } else if (commandName == 'pause') {
@@ -123,24 +129,24 @@ async function displayQueue(interaction) {
     if (songQueue.length === 0) {
         interaction.reply('The queue is currently empty.');
     } else {
+        
         const embed = new EmbedBuilder()
-            .setColor('#0099ff')
-            .setTitle('Current Queue');
-
-        const promises = songQueue.map(async (song, index) => {
+        .setColor('#0099ff')
+        .setTitle('Current Queue');
+        
+        let promises = titleQueue.map(async (title, index) => {
             try {
-                const songInfo = await ytdl.getInfo(song);
-                const songTitle = songInfo.videoDetails.title;
-                embed.addFields({ name: `Song ${index + 1}`, value: songTitle, inline: true });
+                embed.addFields({ name: `Song ${index + 1}`, value: title, inline: true });
             } catch (error) {
                 console.error('Error occurred while fetching song info:', error);
                 embed.addFields({ name: `Song ${index + 1}`, value: 'Failed to fetch title', inline: true });
             }
         });
 
-        await Promise.all(promises);
 
-        interaction.reply({ embeds: [embed] });
+        if (!interaction.deferred) {
+            interaction.reply({ embeds: [embed] })
+        }
     }
 }
 
