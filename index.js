@@ -1,4 +1,4 @@
-import { Application, Client, GatewayIntentBits, Options, VoiceChannel } from 'discord.js';
+import { Client, GatewayIntentBits, EmbedBuilder } from 'discord.js';
 import { createAudioPlayer, createAudioResource, joinVoiceChannel, AudioPlayerStatus, AudioPlayer } from '@discordjs/voice';
 import ytdl from 'ytdl-core';
 import dotenv from "dotenv";
@@ -21,12 +21,14 @@ let songQueue = [];
 let userVoiceChannel;
 let player;
 let botVoiceChannel;
+let songInfo;
+let songTitle;
 
 client.on('interactionCreate', async interaction => {
     let { commandName } = interaction
 
     if (commandName == "ping") {
-        
+
         interaction.reply("Pong!!");
 
     } else if (commandName == "link") {
@@ -41,8 +43,8 @@ client.on('interactionCreate', async interaction => {
         if (!userVoiceChannel) {
             interaction.reply('You need to be in a voice channel to use this command.');
             return;
-        } 
-        
+        }
+
         if (!player || player.state.status === 'idle') {
             const connectToVoice = await joinVoiceChannel({
                 channelId: userVoiceChannel.id,
@@ -54,6 +56,9 @@ client.on('interactionCreate', async interaction => {
             player = createAudioPlayer();
             connectToVoice.subscribe(player);
             playSong(song, interaction);
+
+
+
         } else {
             interaction.reply('Added to queue.');
         }
@@ -78,27 +83,80 @@ client.on('interactionCreate', async interaction => {
     } else if (commandName == 'leave') {
 
         botVoiceChannel.disconnect();
-        interaction.reply('The bot has left the voice channel. Until next time!');
-        songQueue = [];
+        clearQueue(interaction)
+
+    } else if (commandName == 'queue') {
+
+        displayQueue(interaction);
+
+    } else if (commandName == 'remove') {
+
+        let index = interaction.options.get('index').value;
+        removeSong(index, interaction);
 
     }
+
 });
 
-function playSong(song, interaction) {
-    const stream = ytdl(song, { filter: 'audioonly' });
-    const resource = createAudioResource(stream);
-    player.play(resource);
-    
-    interaction.reply('playing ' + song);
+async function playSong(song, interaction) {
+    try {
+        const stream = ytdl(song, { filter: 'audioonly' });
+        const resource = createAudioResource(stream);
+        player.play(resource);
 
-    player.once(AudioPlayerStatus.Idle, () => {
-        songQueue.shift();
+        interaction.reply(`Now playing: ${song}`);
 
-        if (songQueue.length > 0) {
-            const nextSong = songQueue[0];
-            playSong(nextSong, interaction);
-        }
-    });
+        player.once(AudioPlayerStatus.Idle, () => {
+            songQueue.shift();
+            if (songQueue.length > 0) {
+                const nextSong = songQueue[0];
+                playSong(nextSong, interaction);
+            }
+        });
+    } catch (error) {
+        console.error('Error occurred while fetching song info:', error);
+        interaction.reply('An error occurred while fetching song information.');
+    }
+}
+
+async function displayQueue(interaction) {
+    if (songQueue.length === 0) {
+        interaction.reply('The queue is currently empty.');
+    } else {
+        const embed = new EmbedBuilder()
+            .setColor('#0099ff')
+            .setTitle('Current Queue');
+
+        const promises = songQueue.map(async (song, index) => {
+            try {
+                const songInfo = await ytdl.getInfo(song);
+                const songTitle = songInfo.videoDetails.title;
+                embed.addFields({ name: `Song ${index + 1}`, value: songTitle, inline: true });
+            } catch (error) {
+                console.error('Error occurred while fetching song info:', error);
+                embed.addFields({ name: `Song ${index + 1}`, value: 'Failed to fetch title', inline: true });
+            }
+        });
+
+        await Promise.all(promises);
+
+        interaction.reply({ embeds: [embed] });
+    }
+}
+
+function removeSong(index, interaction) {
+    if (index > 0 && index <= songQueue.length) {
+        const removedSong = songQueue.splice(index - 1, 1);
+        interaction.reply(`Removed ${removedSong} from the queue.`);
+    } else {
+        interaction.reply('Invalid song index.');
+    }
+}
+
+function clearQueue(interaction) {
+    player = null;
+    songQueue = [];
+    interaction.reply('The bot has left the voice channel and queue cleared successfully!');
 }
 
 client.login(process.env.BOT_TOKEN)

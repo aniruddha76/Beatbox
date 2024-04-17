@@ -39,6 +39,22 @@ const commands = [
     name: 'leave',
     description: 'Stop and leave the voice channel'
   },
+  {
+    name: 'queue',
+    description: 'display current queue'
+  },
+  {
+    name: 'remove',
+    description: 'remove a song from current queue',
+    options: [
+      {
+        name: 'index',
+        description: 'index of song you want to remove',
+        type: 4,
+        required: true,
+      }
+    ] 
+  },
 ];
 
 const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
