@@ -153,6 +153,7 @@ async function displayQueue(interaction) {
 function removeSong(index, interaction) {
     if (index > 0 && index <= songQueue.length) {
         const removedSong = songQueue.splice(index - 1, 1);
+        titleQueue.splice(index -1, 1);
         interaction.reply(`Removed ${removedSong} from the queue.`);
     } else {
         interaction.reply('Invalid song index.');
@@ -162,6 +163,7 @@ function removeSong(index, interaction) {
 function clearQueue(interaction) {
     player = null;
     songQueue = [];
+    titleQueue = [];
     interaction.reply('The bot has left the voice channel and queue cleared successfully!');
 }
 
